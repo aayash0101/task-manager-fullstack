@@ -1,0 +1,47 @@
+const express = require('express');
+const router = express.Router();
+
+const Task = require('../models/Task');
+const verifyToken = require('../middleware/authMiddleware');
+
+// GET tasks
+router.get('/', verifyToken, async (req, res) => {
+  const tasks = await Task.find({ userId: req.userId });
+  res.json(tasks);
+});
+
+// CREATE task
+router.post('/', verifyToken, async (req, res) => {
+  const task = new Task({
+    text: req.body.text,
+    completed: false,
+    userId: req.userId
+  });
+
+  await task.save();
+  res.json(task);
+});
+
+// DELETE
+router.delete('/:id', verifyToken, async (req, res) => {
+  await Task.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
+});
+
+// TOGGLE
+router.put('/:id', verifyToken, async (req, res) => {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Not found" });
+
+    if (req.body.text !== undefined) {
+        task.text = req.body.text;  // ✅ edit mode
+    } else {
+        task.completed = !task.completed;  // ✅ toggle mode
+    }
+
+    await task.save();
+    res.json(task);
+});
+
+
+module.exports = router;
