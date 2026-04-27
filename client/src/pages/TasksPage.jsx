@@ -9,6 +9,8 @@ const COLUMNS = [
 ];
 
 const globalCSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -18,33 +20,51 @@ const globalCSS = `
     to   { opacity: 1; }
   }
   .task-card {
-    background: var(--color-background-primary);
-    border: 0.5px solid var(--color-border-tertiary);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
     border-radius: 12px;
     padding: 12px 14px;
     margin-bottom: 8px;
     cursor: grab;
-    transition: border-color 0.15s ease, transform 0.15s ease;
+    font-family: 'Inter', sans-serif !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
     animation: slideIn 0.18s ease both;
   }
-  .task-card:hover { border-color: var(--color-border-secondary); transform: translateY(-1px); }
+  .task-card:hover {
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.09), 0 1px 3px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+  }
   .task-card:active { transform: scale(0.99); }
+  .task-text {
+    font-size: 14px;
+    font-weight: 450;
+    font-family: 'Inter', sans-serif !important;
+    margin: 0 0 10px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #1a1a1a;
+  }
   .action-btn {
     font-size: 12px;
+    font-family: 'Inter', sans-serif !important;
     padding: 3px 10px;
     border-radius: 6px;
-    border: 0.5px solid var(--color-border-tertiary);
+    border: 0.5px solid rgba(0, 0, 0, 0.12);
     background: transparent;
-    color: var(--color-text-secondary);
+    color: #666;
     cursor: pointer;
     transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
   }
-  .action-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-secondary); }
+  .action-btn:hover { background: #f5f5f5; color: #111; border-color: rgba(0,0,0,0.2); }
   .action-btn:active { transform: scale(0.96); }
   .action-btn.save { color: #3B6D11; border-color: #97C459; }
   .action-btn.save:hover { background: #EAF3DE; }
-  .action-btn.delete { color: var(--color-text-danger); border-color: var(--color-border-danger); }
-  .action-btn.delete:hover { background: var(--color-background-danger); }
+  .action-btn.delete { color: #c0392b; border-color: #e8a09a; }
+  .action-btn.delete:hover { background: #fdf0ef; }
   .add-btn {
     padding: 9px 18px;
     background: #185FA5;
@@ -53,6 +73,7 @@ const globalCSS = `
     border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
+    font-family: 'Inter', sans-serif !important;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease;
     white-space: nowrap;
@@ -62,36 +83,41 @@ const globalCSS = `
   .add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .logout-btn {
     background: transparent;
-    border: 0.5px solid var(--color-border-secondary);
+    border: 0.5px solid rgba(255,255,255,0.3);
     border-radius: 8px;
     padding: 6px 14px;
     font-size: 13px;
-    color: var(--color-text-danger);
+    font-family: 'Inter', sans-serif !important;
+    color: #E6F1FB;
     cursor: pointer;
     transition: background 0.12s ease, transform 0.1s ease;
   }
-  .logout-btn:hover { background: var(--color-background-danger); }
+  .logout-btn:hover { background: rgba(255,255,255,0.1); }
   .logout-btn:active { transform: scale(0.97); }
   .task-input {
     flex: 1;
     padding: 9px 14px;
     font-size: 14px;
-    border: 0.5px solid var(--color-border-secondary);
+    font-weight: 400;
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.01em;
+    border: 1px solid rgba(0,0,0,0.12);
     border-radius: 10px;
-    background: var(--color-background-primary);
-    color: var(--color-text-primary);
+    background: #ffffff;
+    color: #1a1a1a;
     outline: none;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .task-input:focus { border-color: #378ADD; }
+  .task-input:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
   .edit-input {
     width: 100%;
     padding: 6px 10px;
     font-size: 14px;
-    border: 0.5px solid #378ADD;
+    font-family: 'Inter', sans-serif !important;
+    border: 1px solid #378ADD;
     border-radius: 8px;
-    background: var(--color-background-secondary);
-    color: var(--color-text-primary);
+    background: #f7fbff;
+    color: #1a1a1a;
     margin-bottom: 10px;
     box-sizing: border-box;
     outline: none;
@@ -99,11 +125,10 @@ const globalCSS = `
   }
   .done-text {
     text-decoration: line-through;
-    color: var(--color-text-tertiary);
+    color: #999 !important;
   }
 `;
 
-// ✅ Memoized card — only re-renders when its own data changes
 const TaskCard = memo(({ task, editingId, editText, onEdit, onSave, onDelete, onEditChange }) => {
     const isEditing = editingId === task._id;
     return (
@@ -117,15 +142,7 @@ const TaskCard = memo(({ task, editingId, editText, onEdit, onSave, onDelete, on
                     autoFocus
                 />
             ) : (
-                <p
-                    className={task.status === "done" ? "done-text" : ""}
-                    style={{
-                        fontSize: "14px",
-                        margin: "0 0 10px",
-                        lineHeight: "1.5",
-                        color: task.status === "done" ? undefined : "var(--color-text-primary)",
-                    }}
-                >
+                <p className={`task-text${task.status === "done" ? " done-text" : ""}`}>
                     {task.text}
                 </p>
             )}
@@ -141,12 +158,11 @@ const TaskCard = memo(({ task, editingId, editText, onEdit, onSave, onDelete, on
     );
 });
 
-// ✅ Memoized column — only re-renders when its tasks change
 const Column = memo(({ col, colTasks, editingId, editText, onEdit, onSave, onDelete, onEditChange }) => (
     <div style={{
         flex: 1,
         background: col.bg,
-        border: `0.5px solid ${col.border}`,
+        border: `1px solid ${col.border}`,
         borderRadius: "14px",
         padding: "14px",
         minWidth: 0,
@@ -154,11 +170,26 @@ const Column = memo(({ col, colTasks, editingId, editText, onEdit, onSave, onDel
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                 <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: col.dot, display: "inline-block", flexShrink: 0 }} />
-                <span style={{ fontSize: "12px", fontWeight: "500", color: col.pillText, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <span style={{
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    fontFamily: "'Inter', sans-serif",
+                    color: col.pillText,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                }}>
                     {col.label}
                 </span>
             </div>
-            <span style={{ fontSize: "12px", fontWeight: "500", background: col.pill, color: col.pillText, borderRadius: "20px", padding: "2px 8px" }}>
+            <span style={{
+                fontSize: "12px",
+                fontWeight: "500",
+                fontFamily: "'Inter', sans-serif",
+                background: col.pill,
+                color: col.pillText,
+                borderRadius: "20px",
+                padding: "2px 8px",
+            }}>
                 {colTasks.length}
             </span>
         </div>
@@ -294,7 +325,6 @@ export default function TasksPage({ token, logout }) {
             rest.splice(destination.index, 0, moving);
             const reordered = rest.map((t, i) => ({ ...t, order: i }));
 
-            // Fire API without blocking
             if (sourceCol !== destCol) {
                 moveTask(draggableId, destCol, token).catch(console.error);
             }
@@ -310,16 +340,23 @@ export default function TasksPage({ token, logout }) {
     return (
         <>
             <style>{globalCSS}</style>
-            <div style={{ minHeight: "100vh", background: "var(--color-background-tertiary)", padding: "2rem", fontFamily: "var(--font-sans)" }}>
+            <div style={{ minHeight: "100vh", background: "#f0f2f5", padding: "2rem", fontFamily: "'Inter', sans-serif" }}>
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "980px", margin: "0 auto 1.5rem", background: "#185FA5", borderRadius: "14px", padding: "16px 24px" }}>
                     <div>
-                        <h1 style={{ fontSize: "22px", fontWeight: "500", color: "E6F1FB", margin: "0 0 2px" }}>Task board</h1>
-                        <p style={{ fontSize: "13px", color: "#85B7EB", margin: 0 }}>
+                        <h1 style={{
+                            fontSize: "22px",
+                            fontWeight: "600",
+                            fontFamily: "'Inter', sans-serif",
+                            color: "#E6F1FB",
+                            margin: "0 0 2px",
+                            letterSpacing: "-0.02em",
+                        }}>Task board</h1>
+                        <p style={{ fontSize: "13px", fontFamily: "'Inter', sans-serif", color: "#85B7EB", margin: 0 }}>
                             {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
                         </p>
                     </div>
-                    <button className="logout-btn" onClick={logout} style={{ color: "#E6F1FB", borderColor: "rgba(255,255,255,0.3)", fontSize:"22px", fontWeight: "500" }}>Sign out</button>
+                    <button className="logout-btn" onClick={logout}>Sign out</button>
                 </div>
 
                 <div style={{ display: "flex", gap: "8px", maxWidth: "980px", margin: "0 auto 1.5rem" }}>
