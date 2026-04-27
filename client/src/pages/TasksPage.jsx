@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchTasks, addTask, deleteTask, toggleTask, editTask } from "../api/tasksApi";
+import { fetchTasks, addTask, deleteTask, toggleTask, editTask, reorderTasks } from "../api/tasksApi";
+import { Draggable, DragDropContext, Droppable } from "@hello-pangea/dnd";
 
 function TasksPage({ token, logout }) {
     const [tasks, setTasks] = useState([]);
@@ -109,68 +110,67 @@ function TasksPage({ token, logout }) {
                 </div>
 
                 {/* TASK LIST */}
-                <div className="space-y-3">
-                    {tasks.map(task => (
-                        <div
-                            key={task._id}
-                            className="flex justify-between items-center bg-white p-3 rounded-xl shadow"
-                        >
-                            {/* LEFT SIDE */}
-                            {editingId === task._id ? (
-                                <input
-                                    value={editText}
-                                    onChange={(e) => setEditText(e.target.value)}
-                                    className="flex-1 p-1 border rounded"
-                                />
-                            ) : (
-                                <span className={task.completed ? "line-through text-gray-400" : ""}>
-                                    {task.text}
-                                </span>
-                            )}
+                <DragDropContext
+                    onDragEnd={async (result) => {
+                        if (!result.destination) return;
 
-                            {/* RIGHT SIDE BUTTONS */}
-                            <div className="flex gap-2">
+                        const items = Array.from(tasks);
+                        const [moved] = items.splice(result.source.index, 1);
+                        items.splice(result.destination.index, 0, moved);
 
-                                {/* DONE / UNDO */}
-                                <button
-                                    onClick={() => handleToggle(task._id)}
-                                    className="text-blue-500"
-                                >
-                                    {task.completed ? "Undo" : "Done"}
-                                </button>
+                        setTasks(items); // instant UI update
 
-                                {/* EDIT / SAVE */}
-                                {editingId === task._id ? (
-                                    <button
-                                        onClick={() => handleEdit(task._id)}
-                                        className="text-green-500"
-                                    >
-                                        Save
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => {
-                                            setEditingId(task._id);
-                                            setEditText(task.text);
-                                        }}
-                                        className="text-yellow-500"
-                                    >
-                                        Edit
-                                    </button>
-                                )}
+                        await reorderTasks(items, token); // save to DB
+                    }}
+                >
+                    <Droppable droppableId="tasks">
+                        {(provided) => (
+                            <div {...provided.droppableProps} ref={provided.innerRef}>
+                                {tasks.map((task, index) => (
+                                    <Draggable key={task._id} draggableId={task._id} index={index}>
+                                        {(provided) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                className="bg-white p-3 rounded-xl shadow mb-2 flex justify-between items-center"
+                                            >
+                                                <span
+                                                    className={task.completed ? "line-through text-gray-400" : ""}
+                                                >
+                                                    {task.text}
+                                                </span>
 
-                                {/* DELETE */}
-                                <button
-                                    onClick={() => handleDelete(task._id)}
-                                    className="text-red-500"
-                                >
-                                    ❌
-                                </button>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={async () => {
+                                                            await toggleTask(task._id, token);
+                                                            loadTasks();
+                                                        }}
+                                                        className="text-blue-500"
+                                                    >
+                                                        {task.completed ? "Undo" : "Done"}
+                                                    </button>
 
+                                                    <button
+                                                        onClick={async () => {
+                                                            await deleteTask(task._id, token);
+                                                            loadTasks();
+                                                        }}
+                                                        className="text-red-500"
+                                                    >
+                                                        ❌
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </Draggable>
+                                ))}
+                                {provided.placeholder}
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        )}
+                    </Droppable>
+                </DragDropContext>
             </div>
         </div>
     );

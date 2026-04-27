@@ -43,9 +43,17 @@ export const toggleTask = async (id, token) => {
 
 export const editTask = async (id, text, token) => {
   const res = await fetch(`${BASE_URL}/tasks/${id}`, {
-    method: 'PUT',                          // ✅ add this
-    headers: getHeaders(token),             // ✅ use existing helper
+    method: 'PUT',                          
+    headers: getHeaders(token),             
     body: JSON.stringify({ text })
   });
   return res.json();
 };
+
+export const reorderTasks = async (tasks, token) => {
+  const res = await fetch(`${BASE_URL}/tasks/reorder`, {
+    headers: getHeaders(token),
+    body: JSON.stringify({ tasks }),
+  });
+  return res.json();
+}
