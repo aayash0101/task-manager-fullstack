@@ -3,9 +3,9 @@ import { fetchTasks, addTask, deleteTask, editTask, reorderTasks, moveTask } fro
 import { Draggable, DragDropContext, Droppable } from "@hello-pangea/dnd";
 
 const COLUMNS = [
-    { id: "todo",        label: "To do",       dot: "#378ADD", bg: "#E6F1FB", border: "#85B7EB", pill: "#B5D4F4", pillText: "#0C447C" },
-    { id: "in-progress", label: "In progress",  dot: "#BA7517", bg: "#FAEEDA", border: "#EF9F27", pill: "#FAC775", pillText: "#633806" },
-    { id: "done",        label: "Done",         dot: "#3B6D11", bg: "#EAF3DE", border: "#97C459", pill: "#C0DD97", pillText: "#27500A" },
+    { id: "todo", label: "To do", dot: "#378ADD", bg: "#E6F1FB", border: "#85B7EB", pill: "#B5D4F4", pillText: "#0C447C" },
+    { id: "in-progress", label: "In progress", dot: "#BA7517", bg: "#FAEEDA", border: "#EF9F27", pill: "#FAC775", pillText: "#633806" },
+    { id: "done", label: "Done", dot: "#3B6D11", bg: "#EAF3DE", border: "#97C459", pill: "#C0DD97", pillText: "#27500A" },
 ];
 
 const globalCSS = `
@@ -312,14 +312,14 @@ export default function TasksPage({ token, logout }) {
             <style>{globalCSS}</style>
             <div style={{ minHeight: "100vh", background: "var(--color-background-tertiary)", padding: "2rem", fontFamily: "var(--font-sans)" }}>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "980px", margin: "0 auto 1.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "980px", margin: "0 auto 1.5rem", background: "#185FA5", borderRadius: "14px", padding: "16px 24px" }}>
                     <div>
-                        <h1 style={{ fontSize: "22px", fontWeight: "500", color: "var(--color-text-primary)", margin: "0 0 2px" }}>Task board</h1>
-                        <p style={{ fontSize: "13px", color: "var(--color-text-tertiary)", margin: 0 }}>
+                        <h1 style={{ fontSize: "22px", fontWeight: "500", color: "E6F1FB", margin: "0 0 2px" }}>Task board</h1>
+                        <p style={{ fontSize: "13px", color: "#85B7EB", margin: 0 }}>
                             {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
                         </p>
                     </div>
-                    <button className="logout-btn" onClick={logout}>Sign out</button>
+                    <button className="logout-btn" onClick={logout} style={{ color: "#E6F1FB", borderColor: "rgba(255,255,255,0.3)", fontSize:"22px", fontWeight: "500" }}>Sign out</button>
                 </div>
 
                 <div style={{ display: "flex", gap: "8px", maxWidth: "980px", margin: "0 auto 1.5rem" }}>
