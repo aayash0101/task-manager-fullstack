@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { fetchTasks, addTask, deleteTask, editTask, reorderTasks, moveTask } from "../api/tasksApi";
 import { Draggable, DragDropContext, Droppable } from "@hello-pangea/dnd";
 
 const COLUMNS = [
-    { id: "todo",        label: "To do",      dot: "#378ADD", bg: "#E6F1FB", border: "#85B7EB", pill: "#B5D4F4", pillText: "#0C447C" },
-    { id: "in-progress", label: "In progress", dot: "#BA7517", bg: "#FAEEDA", border: "#EF9F27", pill: "#FAC775", pillText: "#633806" },
-    { id: "done",        label: "Done",        dot: "#3B6D11", bg: "#EAF3DE", border: "#97C459", pill: "#C0DD97", pillText: "#27500A" },
+    { id: "todo",        label: "To do",       dot: "#378ADD", bg: "#E6F1FB", border: "#85B7EB", pill: "#B5D4F4", pillText: "#0C447C" },
+    { id: "in-progress", label: "In progress",  dot: "#BA7517", bg: "#FAEEDA", border: "#EF9F27", pill: "#FAC775", pillText: "#633806" },
+    { id: "done",        label: "Done",         dot: "#3B6D11", bg: "#EAF3DE", border: "#97C459", pill: "#C0DD97", pillText: "#27500A" },
 ];
 
 const globalCSS = `
@@ -24,13 +24,10 @@ const globalCSS = `
     padding: 12px 14px;
     margin-bottom: 8px;
     cursor: grab;
-    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease, transform 0.15s ease;
     animation: slideIn 0.18s ease both;
   }
-  .task-card:hover {
-    border-color: var(--color-border-secondary);
-    transform: translateY(-1px);
-  }
+  .task-card:hover { border-color: var(--color-border-secondary); transform: translateY(-1px); }
   .task-card:active { transform: scale(0.99); }
   .action-btn {
     font-size: 12px;
@@ -62,6 +59,7 @@ const globalCSS = `
   }
   .add-btn:hover { background: #0C447C; }
   .add-btn:active { transform: scale(0.97); }
+  .add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .logout-btn {
     background: transparent;
     border: 0.5px solid var(--color-border-secondary);
@@ -99,18 +97,116 @@ const globalCSS = `
     outline: none;
     animation: fadeIn 0.12s ease both;
   }
-  .column-wrap {
-    transition: background 0.2s ease;
-  }
-  .column-wrap.drag-over {
-    background: rgba(55, 138, 221, 0.06);
-  }
   .done-text {
     text-decoration: line-through;
     color: var(--color-text-tertiary);
-    transition: color 0.2s ease;
   }
 `;
+
+// ✅ Memoized card — only re-renders when its own data changes
+const TaskCard = memo(({ task, editingId, editText, onEdit, onSave, onDelete, onEditChange }) => {
+    const isEditing = editingId === task._id;
+    return (
+        <div className="task-card">
+            {isEditing ? (
+                <input
+                    className="edit-input"
+                    value={editText}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onSave(task._id)}
+                    autoFocus
+                />
+            ) : (
+                <p
+                    className={task.status === "done" ? "done-text" : ""}
+                    style={{
+                        fontSize: "14px",
+                        margin: "0 0 10px",
+                        lineHeight: "1.5",
+                        color: task.status === "done" ? undefined : "var(--color-text-primary)",
+                    }}
+                >
+                    {task.text}
+                </p>
+            )}
+            <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                {isEditing ? (
+                    <button className="action-btn save" onClick={() => onSave(task._id)}>Save</button>
+                ) : (
+                    <button className="action-btn" onClick={() => onEdit(task._id, task.text)}>Edit</button>
+                )}
+                <button className="action-btn delete" onClick={() => onDelete(task._id)}>Delete</button>
+            </div>
+        </div>
+    );
+});
+
+// ✅ Memoized column — only re-renders when its tasks change
+const Column = memo(({ col, colTasks, editingId, editText, onEdit, onSave, onDelete, onEditChange }) => (
+    <div style={{
+        flex: 1,
+        background: col.bg,
+        border: `0.5px solid ${col.border}`,
+        borderRadius: "14px",
+        padding: "14px",
+        minWidth: 0,
+    }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: col.dot, display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontSize: "12px", fontWeight: "500", color: col.pillText, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {col.label}
+                </span>
+            </div>
+            <span style={{ fontSize: "12px", fontWeight: "500", background: col.pill, color: col.pillText, borderRadius: "20px", padding: "2px 8px" }}>
+                {colTasks.length}
+            </span>
+        </div>
+
+        <Droppable droppableId={col.id}>
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    style={{
+                        minHeight: "60px",
+                        borderRadius: "8px",
+                        padding: "2px",
+                        transition: "background 0.15s ease",
+                        background: snapshot.isDraggingOver ? "rgba(55,138,221,0.05)" : "transparent",
+                    }}
+                >
+                    {colTasks.map((task, index) => (
+                        <Draggable key={task._id} draggableId={task._id} index={index}>
+                            {(provided, snapshot) => (
+                                <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    style={{
+                                        ...provided.draggableProps.style,
+                                        opacity: snapshot.isDragging ? 0.88 : 1,
+                                    }}
+                                >
+                                    <TaskCard
+                                        task={task}
+                                        editingId={editingId}
+                                        editText={editText}
+                                        onEdit={onEdit}
+                                        onSave={onSave}
+                                        onDelete={onDelete}
+                                        onEditChange={onEditChange}
+                                    />
+                                </div>
+                            )}
+                        </Draggable>
+                    ))}
+                    {provided.placeholder}
+                </div>
+            )}
+        </Droppable>
+    </div>
+));
 
 export default function TasksPage({ token, logout }) {
     const [tasks, setTasks] = useState([]);
@@ -119,20 +215,19 @@ export default function TasksPage({ token, logout }) {
     const [editText, setEditText] = useState("");
     const [adding, setAdding] = useState(false);
 
-    const loadTasks = async () => {
+    const loadTasks = useCallback(async () => {
         try {
             const data = await fetchTasks(token);
             if (Array.isArray(data)) setTasks(data);
             else setTasks([]);
         } catch (err) {
             console.error("Load tasks failed:", err);
-            setTasks([]);
         }
-    };
+    }, [token]);
 
-    useEffect(() => { loadTasks(); }, []);
+    useEffect(() => { loadTasks(); }, [loadTasks]);
 
-    const handleAdd = async () => {
+    const handleAdd = useCallback(async () => {
         if (!text.trim() || adding) return;
         setAdding(true);
         try {
@@ -144,53 +239,79 @@ export default function TasksPage({ token, logout }) {
         } finally {
             setAdding(false);
         }
-    };
+    }, [text, token, adding]);
 
-    const handleDelete = async (id) => {
+    const handleDelete = useCallback(async (id) => {
         setTasks(prev => prev.filter(t => t._id !== id));
-        try { await deleteTask(id, token); }
-        catch (err) { console.error("Delete failed:", err); loadTasks(); }
-    };
+        try {
+            await deleteTask(id, token);
+        } catch (err) {
+            console.error("Delete failed:", err);
+            loadTasks();
+        }
+    }, [token, loadTasks]);
 
-    const handleEdit = async (id) => {
-        setTasks(prev => prev.map(t => t._id === id ? { ...t, text: editText } : t));
+    const handleEditStart = useCallback((id, currentText) => {
+        setEditingId(id);
+        setEditText(currentText);
+    }, []);
+
+    const handleEditSave = useCallback(async (id) => {
+        const savedText = editText;
+        setTasks(prev => prev.map(t => t._id === id ? { ...t, text: savedText } : t));
         setEditingId(null);
         setEditText("");
-        try { await editTask(id, editText, token); }
-        catch (err) { console.error("Edit failed:", err); loadTasks(); }
-    };
+        try {
+            await editTask(id, savedText, token);
+        } catch (err) {
+            console.error("Edit failed:", err);
+            loadTasks();
+        }
+    }, [editText, token, loadTasks]);
 
-    const handleDragEnd = async (result) => {
+    const handleEditChange = useCallback((val) => {
+        setEditText(val);
+    }, []);
+
+    const handleDragEnd = useCallback((result) => {
         const { source, destination, draggableId } = result;
         if (!destination) return;
+
         const sourceCol = source.droppableId;
         const destCol = destination.droppableId;
         if (sourceCol === destCol && source.index === destination.index) return;
 
         setTasks(prev => {
-            const updated = prev.map(t => t._id === draggableId ? { ...t, status: destCol } : t);
-            const colTasks = updated.filter(t => t.status === destCol).sort((a, b) => a.order - b.order);
+            const updated = prev.map(t =>
+                t._id === draggableId ? { ...t, status: destCol } : t
+            );
+            const colTasks = updated
+                .filter(t => t.status === destCol)
+                .sort((a, b) => a.order - b.order);
+
             const moving = colTasks.find(t => t._id === draggableId);
             const rest = colTasks.filter(t => t._id !== draggableId);
             rest.splice(destination.index, 0, moving);
             const reordered = rest.map((t, i) => ({ ...t, order: i }));
-            return updated.map(t => { const r = reordered.find(r => r._id === t._id); return r ? r : t; });
-        });
 
-        if (sourceCol !== destCol) await moveTask(draggableId, destCol, token);
-        const colTasks = tasks
-            .filter(t => t.status === destCol || t._id === draggableId)
-            .map(t => t._id === draggableId ? { ...t, status: destCol } : t)
-            .filter(t => t.status === destCol);
-        await reorderTasks(colTasks, token);
-    };
+            // Fire API without blocking
+            if (sourceCol !== destCol) {
+                moveTask(draggableId, destCol, token).catch(console.error);
+            }
+            reorderTasks(reordered, token).catch(console.error);
+
+            return updated.map(t => {
+                const r = reordered.find(r => r._id === t._id);
+                return r ? r : t;
+            });
+        });
+    }, [token]);
 
     return (
         <>
             <style>{globalCSS}</style>
             <div style={{ minHeight: "100vh", background: "var(--color-background-tertiary)", padding: "2rem", fontFamily: "var(--font-sans)" }}>
 
-                {/* HEADER */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", maxWidth: "980px", margin: "0 auto 1.5rem" }}>
                     <div>
                         <h1 style={{ fontSize: "22px", fontWeight: "500", color: "var(--color-text-primary)", margin: "0 0 2px" }}>Task board</h1>
@@ -201,7 +322,6 @@ export default function TasksPage({ token, logout }) {
                     <button className="logout-btn" onClick={logout}>Sign out</button>
                 </div>
 
-                {/* INPUT */}
                 <div style={{ display: "flex", gap: "8px", maxWidth: "980px", margin: "0 auto 1.5rem" }}>
                     <input
                         className="task-input"
@@ -215,108 +335,24 @@ export default function TasksPage({ token, logout }) {
                     </button>
                 </div>
 
-                {/* BOARD */}
                 <DragDropContext onDragEnd={handleDragEnd}>
                     <div style={{ display: "flex", gap: "14px", maxWidth: "980px", margin: "0 auto", alignItems: "flex-start" }}>
                         {COLUMNS.map(col => {
                             const colTasks = tasks
                                 .filter(t => t.status === col.id)
                                 .sort((a, b) => a.order - b.order);
-
                             return (
-                                <div
+                                <Column
                                     key={col.id}
-                                    className="column-wrap"
-                                    style={{
-                                        flex: 1,
-                                        background: col.bg,
-                                        border: `0.5px solid ${col.border}`,
-                                        borderRadius: "14px",
-                                        padding: "14px",
-                                        minWidth: 0,
-                                    }}
-                                >
-                                    {/* COLUMN HEADER */}
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                                            <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: col.dot, display: "inline-block", flexShrink: 0 }} />
-                                            <span style={{ fontSize: "12px", fontWeight: "500", color: col.pillText, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                                                {col.label}
-                                            </span>
-                                        </div>
-                                        <span style={{
-                                            fontSize: "12px", fontWeight: "500",
-                                            background: col.pill, color: col.pillText,
-                                            borderRadius: "20px", padding: "2px 8px",
-                                            transition: "background 0.2s ease",
-                                        }}>
-                                            {colTasks.length}
-                                        </span>
-                                    </div>
-
-                                    {/* DROPPABLE */}
-                                    <Droppable droppableId={col.id}>
-                                        {(provided, snapshot) => (
-                                            <div
-                                                ref={provided.innerRef}
-                                                {...provided.droppableProps}
-                                                style={{
-                                                    minHeight: "60px",
-                                                    borderRadius: "8px",
-                                                    transition: "background 0.15s ease",
-                                                    background: snapshot.isDraggingOver ? "rgba(55,138,221,0.05)" : "transparent",
-                                                    padding: "2px",
-                                                }}
-                                            >
-                                                {colTasks.map((task, index) => (
-                                                    <Draggable key={task._id} draggableId={task._id} index={index}>
-                                                        {(provided, snapshot) => (
-                                                            <div
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                className="task-card"
-                                                                style={{
-                                                                    ...provided.draggableProps.style,
-                                                                    opacity: snapshot.isDragging ? 0.85 : 1,
-                                                                    boxShadow: snapshot.isDragging ? "0 4px 16px rgba(0,0,0,0.10)" : "none",
-                                                                    transform: snapshot.isDragging
-                                                                        ? `${provided.draggableProps.style?.transform} rotate(1.5deg)`
-                                                                        : provided.draggableProps.style?.transform,
-                                                                }}
-                                                            >
-                                                                {editingId === task._id ? (
-                                                                    <input
-                                                                        className="edit-input"
-                                                                        value={editText}
-                                                                        onChange={(e) => setEditText(e.target.value)}
-                                                                        onKeyDown={(e) => e.key === "Enter" && handleEdit(task._id)}
-                                                                        autoFocus
-                                                                    />
-                                                                ) : (
-                                                                    <p className={task.status === "done" ? "done-text" : ""}
-                                                                        style={{ fontSize: "14px", margin: "0 0 10px", lineHeight: "1.5", color: task.status === "done" ? undefined : "var(--color-text-primary)" }}>
-                                                                        {task.text}
-                                                                    </p>
-                                                                )}
-
-                                                                <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                                                                    {editingId === task._id ? (
-                                                                        <button className="action-btn save" onClick={() => handleEdit(task._id)}>Save</button>
-                                                                    ) : (
-                                                                        <button className="action-btn" onClick={() => { setEditingId(task._id); setEditText(task.text); }}>Edit</button>
-                                                                    )}
-                                                                    <button className="action-btn delete" onClick={() => handleDelete(task._id)}>Delete</button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                ))}
-                                                {provided.placeholder}
-                                            </div>
-                                        )}
-                                    </Droppable>
-                                </div>
+                                    col={col}
+                                    colTasks={colTasks}
+                                    editingId={editingId}
+                                    editText={editText}
+                                    onEdit={handleEditStart}
+                                    onSave={handleEditSave}
+                                    onDelete={handleDelete}
+                                    onEditChange={handleEditChange}
+                                />
                             );
                         })}
                     </div>
