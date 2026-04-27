@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AuthPage from "./pages/authPage";
+import AuthPage from "./pages/AuthPage";
 import TasksPage from "./pages/TasksPage";
 
 function App() {
