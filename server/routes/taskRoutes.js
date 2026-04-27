@@ -21,7 +21,8 @@ router.post('/', verifyToken, async (req, res) => {
             text: req.body.text,
             completed: false,
             userId: req.userId,
-            order: count
+            order: count,
+            status: 'todo'
         });
         await task.save();
         res.json(task);
@@ -41,6 +42,18 @@ router.put('/reorder', verifyToken, async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
+});
+
+router.put('/:id/move', verifyToken, async (req, res) => {
+  const { status } = req.body;
+
+  const task = await Task.findOneAndUpdate(
+    { _id: req.params.id, userId: req.userId },
+    { status },
+    { new: true }
+  );
+
+  res.json(task);
 });
 
 // TOGGLE / EDIT
@@ -71,5 +84,6 @@ router.delete('/:id', verifyToken, async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
 
 module.exports = router;

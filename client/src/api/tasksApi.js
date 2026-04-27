@@ -54,3 +54,13 @@ export const reorderTasks = async (tasks, token) => {
     });
     return res.json();
 };
+
+export const moveTask = async (id, status, token) => {
+  const res = await fetch(`${BASE_URL}/tasks/${id}/move`, {
+    method: "PUT",
+    headers: getHeaders(token),
+    body: JSON.stringify({ status })
+  });
+
+  return res.json();
+};
