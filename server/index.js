@@ -2,10 +2,18 @@ require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://task-manager-fullstack-cu3i.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // connect DB
