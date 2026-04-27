@@ -113,14 +113,11 @@ function TasksPage({ token, logout }) {
                 <DragDropContext
                     onDragEnd={async (result) => {
                         if (!result.destination) return;
-
                         const items = Array.from(tasks);
                         const [moved] = items.splice(result.source.index, 1);
                         items.splice(result.destination.index, 0, moved);
-
-                        setTasks(items); // instant UI update
-
-                        await reorderTasks(items, token); // save to DB
+                        setTasks(items);
+                        await reorderTasks(items, token);
                     }}
                 >
                     <Droppable droppableId="tasks">
@@ -135,32 +132,58 @@ function TasksPage({ token, logout }) {
                                                 {...provided.dragHandleProps}
                                                 className="bg-white p-3 rounded-xl shadow mb-2 flex justify-between items-center"
                                             >
-                                                <span
-                                                    className={task.completed ? "line-through text-gray-400" : ""}
-                                                >
-                                                    {task.text}
-                                                </span>
+                                                {/* LEFT SIDE - show input when editing */}
+                                                {editingId === task._id ? (
+                                                    <input
+                                                        value={editText}
+                                                        onChange={(e) => setEditText(e.target.value)}
+                                                        className="flex-1 p-1 border rounded mr-2"
+                                                    />
+                                                ) : (
+                                                    <span className={task.completed ? "line-through text-gray-400" : ""}>
+                                                        {task.text}
+                                                    </span>
+                                                )}
 
+                                                {/* RIGHT SIDE BUTTONS */}
                                                 <div className="flex gap-2">
+
+                                                    {/* DONE / UNDO */}
                                                     <button
-                                                        onClick={async () => {
-                                                            await toggleTask(task._id, token);
-                                                            loadTasks();
-                                                        }}
+                                                        onClick={() => handleToggle(task._id)}
                                                         className="text-blue-500"
                                                     >
                                                         {task.completed ? "Undo" : "Done"}
                                                     </button>
 
+                                                    {/* EDIT / SAVE */}
+                                                    {editingId === task._id ? (
+                                                        <button
+                                                            onClick={() => handleEdit(task._id)}
+                                                            className="text-green-500"
+                                                        >
+                                                            Save
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingId(task._id);
+                                                                setEditText(task.text);
+                                                            }}
+                                                            className="text-yellow-500"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    )}
+
+                                                    {/* DELETE */}
                                                     <button
-                                                        onClick={async () => {
-                                                            await deleteTask(task._id, token);
-                                                            loadTasks();
-                                                        }}
+                                                        onClick={() => handleDelete(task._id)}
                                                         className="text-red-500"
                                                     >
                                                         ❌
                                                     </button>
+
                                                 </div>
                                             </div>
                                         )}
